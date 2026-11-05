@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar™</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap">
+<style>
+  html { color-scheme: light; }
+  body { margin: 0; }
+  /* Concept : un radar à manipuler. Le polygone à gauche, les réglages en liste à droite, tout reste synchronisé. */
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --fg: #1b2230;
+    --muted: #5d6676;
+    --line: #d5dae3;
+    --accent: #2f6fe0;
+    --accent-fill: rgba(47, 111, 224, 0.2);
+    --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+    --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12161f; --panel: #1b212d; --fg: #e8ebf2; --muted: #9aa3b5; --line: #323a4b;
+      --accent: #6b9bff; --accent-fill: rgba(107, 155, 255, 0.22);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12161f; --panel: #1b212d; --fg: #e8ebf2; --muted: #9aa3b5; --line: #323a4b;
+    --accent: #6b9bff; --accent-fill: rgba(107, 155, 255, 0.22);
+    color-scheme: dark;
+  }
+  :root[data-side="dark"] {
+    --bg: #110c0c; --panel: #1c1313; --fg: #f1e7e5; --muted: #a58f8c; --line: #4a3230;
+    --accent: #e5484d; --accent-fill: rgba(229, 72, 77, 0.26);
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 15px;
+    padding-block: 24px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.6rem, 4vw, 2.3rem);
+    line-height: 1.1;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .sub { color: var(--muted); margin: 6px 0 0; }
+  .name-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .name-field label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  input[type="text"] {
+    font: inherit; color: var(--fg); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-width: 0;
+  }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 760px) { main { grid-template-columns: minmax(0, 1fr); } }
+
+  .stage { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+  svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; }
+  .ring { fill: none; stroke: var(--line); stroke-width: 1; }
+  .ring.outer { stroke-width: 1.5; }
+  .spoke { stroke: var(--line); stroke-width: 1; }
+  .shape { fill: var(--accent-fill); stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+  .handle { fill: var(--accent); stroke: var(--panel); stroke-width: 3; cursor: grab; }
+  .handle:active { cursor: grabbing; }
+  .handle-hit { fill: transparent; cursor: grab; }
+  .axis-label { fill: var(--fg); font-family: var(--font-body); font-size: 15px; font-weight: 500; }
+  .axis-value { fill: var(--accent); font-family: var(--font-body); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .caption { fill: var(--fg); font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+  .tick { fill: var(--muted); font-family: var(--font-body); font-size: 10px; }
+  .hint { color: var(--muted); font-size: 13px; text-align: center; margin: 4px 0 6px; }
+
+  .controls { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) 2.2ch; grid-template-areas: "label val" "range range"; gap: 4px 10px; align-items: center; }
+  .row input[type="text"] { grid-area: label; padding: 5px 8px; font-weight: 500; }
+  .row .val { grid-area: val; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--accent); }
+  #rows { display: flex; flex-direction: column; gap: 16px; }
+  .row input[type="range"] {
+    grid-area: range; width: 100%; margin: 0; height: 28px; background: transparent;
+    -webkit-appearance: none; appearance: none; touch-action: pan-y; cursor: pointer;
+  }
+  .row input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--line); }
+  .row input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--line); }
+  .row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 24px; height: 24px; margin-top: -9px;
+    border-radius: 50%; background: var(--accent); border: 3px solid var(--panel); box-shadow: 0 0 0 1px var(--accent);
+  }
+  .row input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 3px solid var(--panel); box-shadow: 0 0 0 1px var(--accent);
+  }
+  .status { margin: 0; font-size: 13px; color: var(--muted); min-height: 1.3em; }
+  .preview { display: flex; flex-direction: column; gap: 8px; }
+  .preview img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); font-weight: 600; }
+  button.primary:hover { color: var(--panel); filter: brightness(1.08); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+  button {
+    font: inherit; font-weight: 500; color: var(--fg); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  .side-switch { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; font-size: 14px; color: var(--muted); }
+  .side-switch .on { color: var(--fg); font-weight: 600; }
+  #sw { position: relative; width: 52px; height: 28px; padding: 0; border-radius: 14px; background: var(--line); border: 1px solid var(--line); }
+  #sw:hover { border-color: var(--accent); }
+  #th { position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: #ffffff; }
+  :root[data-side="dark"] #sw { background: var(--accent); border-color: var(--accent); }
+  :root[data-side="dark"] #th { transform: translateX(24px); background: #1c1313; }
+  @media (prefers-reduced-motion: no-preference) {
+    .shape { transition: fill 0.2s; }
+    #th { transition: transform 0.25s; }
+    #sw { transition: background 0.25s, border-color 0.25s; }
+    body, .stage, .controls, input[type="text"], button { transition: background-color 0.4s, border-color 0.4s, color 0.4s; }
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 id="title">Radar™</h1>
+      <p class="sub" id="subtitle">Radar des qualités. Déplace les points sur les axes pour redessiner le portrait.</p>
+      <div class="side-switch">
+        <span id="sl" class="on">Côté lumineux</span>
+        <button type="button" id="sw" role="switch" aria-checked="false" aria-label="Basculer vers le côté obscur"><span id="th"></span></button>
+        <span id="sd">Côté obscur</span>
+      </div>
+    </div>
+    <div class="name-field">
+      <label for="subject">Le sujet</label>
+      <input type="text" id="subject" value="Le sujet" maxlength="40" autocomplete="off">
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="Diagramme radar">
+      <svg id="radar" viewBox="0 0 640 565" role="img" aria-label="Diagramme radar des qualités"></svg>
+      <p class="hint">Glisse un point le long de son axe, ou utilise les curseurs.</p>
+    </section>
+
+    <section class="controls" aria-label="Réglages des axes">
+      <div id="rows"></div>
+      <div class="actions">
+        <button type="button" id="export" class="primary">Exporter en image (PNG)</button>
+        <button type="button" id="reset">Tout remettre à 5</button>
+        <button type="button" id="random">Au hasard</button>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+      <div class="preview" id="preview" hidden>
+        <img id="preview-img" alt="Aperçu du radar exporté">
+        <p class="status">Si l'enregistrement direct n'est pas disponible, appuie longuement sur l'image (ou clic droit) pour l'enregistrer.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var CX = 320, CY = 270, R = 180, LR = 206, MAX = 10;
+  var START_BY_SIDE = {
+    light: [
+      ["Humour", 5], ["Générosité", 5], ["Patience", 5], ["Ponctualité", 5],
+      ["Humilité", 5], ["Discrétion", 5], ["Franchise", 5], ["Gourmandise", 5]
+    ],
+    dark: [
+      ["Susceptibilité", 5], ["Ragots", 5], ["Rancune", 5], ["Flemme", 5],
+      ["Radinerie", 5], ["Jalousie", 5], ["Orgueil", 5], ["Mauvaise foi", 5]
+    ]
+  };
+  var TEXTS = {
+    light: { title: "Radar™", sub: "Radar des qualités. Déplace les points sur les axes pour redessiner le portrait.", aria: "Diagramme radar des qualités", sw: "Basculer vers le côté obscur" },
+    dark: { title: "Radar™", sub: "Radar des sujets sensibles. Le côté que le sujet évite de montrer en public.", aria: "Diagramme radar des sujets sensibles", sw: "Revenir au côté lumineux" }
+  };
+  var N = START_BY_SIDE.light.length;
+  var side = "light";
+  var data = {};
+  ["light", "dark"].forEach(function (k) {
+    data[k] = {
+      labels: START_BY_SIDE[k].map(function (s) { return s[0]; }),
+      values: START_BY_SIDE[k].map(function (s) { return s[1]; })
+    };
+  });
+  var labels = data.light.labels;
+  var values = data.light.values;
+
+  var svg = document.getElementById("radar");
+  var rowsEl = document.getElementById("rows");
+
+  function el(name, attrs, parent) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function angle(i) { return -Math.PI / 2 + (2 * Math.PI * i) / N; }
+  function pt(i, v) {
+    var a = angle(i), r = (v / MAX) * R;
+    return [CX + r * Math.cos(a), CY + r * Math.sin(a)];
+  }
+
+  // Grille
+  for (var g = 1; g <= 5; g++) {
+    var pts = [];
+    for (var i = 0; i < N; i++) { var p = pt(i, g * 2); pts.push(p[0] + "," + p[1]); }
+    el("polygon", { points: pts.join(" "), "class": g === 5 ? "ring outer" : "ring" }, svg);
+  }
+  for (var s = 0; s < N; s++) {
+    var e = pt(s, MAX);
+    el("line", { x1: CX, y1: CY, x2: e[0], y2: e[1], "class": "spoke" }, svg);
+  }
+  [2, 4, 6, 8].forEach(function (t) {
+    var tp = pt(0, t);
+    var tx = el("text", { x: tp[0] + 5, y: tp[1] + 3, "class": "tick" }, svg);
+    tx.textContent = t;
+  });
+
+  var shape = el("polygon", { "class": "shape" }, svg);
+  var labelEls = [], valueEls = [], handles = [], hits = [];
+
+  for (var k = 0; k < N; k++) {
+    var a = angle(k), c = Math.cos(a), sn = Math.sin(a);
+    var lx = CX + LR * c, ly = CY + LR * sn;
+    var anchor = Math.abs(c) < 0.2 ? "middle" : (c > 0 ? "start" : "end");
+    var dy = sn < -0.5 ? -16 : (sn > 0.5 ? 12 : 0);
+    var lt = el("text", { x: lx, y: ly + dy, "text-anchor": anchor, "class": "axis-label" }, svg);
+    var vt = el("text", { x: lx, y: ly + dy + 17, "text-anchor": anchor, "class": "axis-value" }, svg);
+    labelEls.push(lt); valueEls.push(vt);
+  }
+  for (var m = 0; m < N; m++) {
+    hits.push(el("circle", { r: 20, "class": "handle-hit", "data-i": m }, svg));
+    handles.push(el("circle", { r: 8, "class": "handle", "data-i": m, "pointer-events": "none" }, svg));
+  }
+
+  // Lignes de réglage
+  var textInputs = [], ranges = [], valEls = [];
+  for (var r = 0; r < N; r++) {
+    var row = document.createElement("div");
+    row.className = "row";
+    var ti = document.createElement("input");
+    ti.type = "text"; ti.id = "label-" + r; ti.maxLength = 22; ti.autocomplete = "off";
+    ti.setAttribute("aria-label", "Nom de l'axe " + (r + 1));
+    var rg = document.createElement("input");
+    rg.type = "range"; rg.id = "range-" + r; rg.min = 0; rg.max = MAX; rg.step = 1;
+    rg.setAttribute("aria-labelledby", "label-" + r);
+    var vl = document.createElement("span");
+    vl.className = "val";
+    row.appendChild(ti); row.appendChild(vl); row.appendChild(rg);
+    rowsEl.appendChild(row);
+    textInputs.push(ti); ranges.push(rg); valEls.push(vl);
+    (function (idx) {
+      textInputs[idx].addEventListener("input", function () { labels[idx] = textInputs[idx].value; render(true); });
+      ranges[idx].addEventListener("input", function () { values[idx] = +ranges[idx].value; render(true); });
+    })(r);
+  }
+
+  function render(fromInput, view) {
+    var vals = view || values;
+    var pts = [];
+    for (var i = 0; i < N; i++) {
+      var p = pt(i, vals[i]);
+      pts.push(p[0] + "," + p[1]);
+      handles[i].setAttribute("cx", p[0]); handles[i].setAttribute("cy", p[1]);
+      hits[i].setAttribute("cx", p[0]); hits[i].setAttribute("cy", p[1]);
+      labelEls[i].textContent = labels[i];
+      valueEls[i].textContent = Math.round(vals[i]) + " / " + MAX;
+      valEls[i].textContent = values[i];
+      if (document.activeElement !== ranges[i] || +ranges[i].value !== values[i]) ranges[i].value = values[i];
+      if (!fromInput || document.activeElement !== textInputs[i]) textInputs[i].value = labels[i];
+    }
+    shape.setAttribute("points", pts.join(" "));
+  }
+
+  // Glisser les points
+  var dragging = -1;
+  function toSvg(evt) {
+    var pt0 = svg.createSVGPoint();
+    pt0.x = evt.clientX; pt0.y = evt.clientY;
+    return pt0.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  svg.addEventListener("pointerdown", function (evt) {
+    var t = evt.target;
+    if (t && t.getAttribute && t.getAttribute("class") === "handle-hit") {
+      dragging = +t.getAttribute("data-i");
+      try { svg.setPointerCapture(evt.pointerId); } catch (e) {}
+      evt.preventDefault();
+      move(evt);
+    }
+  });
+  function move(evt) {
+    if (dragging < 0) return;
+    var p = toSvg(evt), a = angle(dragging);
+    var proj = (p.x - CX) * Math.cos(a) + (p.y - CY) * Math.sin(a);
+    var v = Math.round((proj / R) * MAX);
+    values[dragging] = Math.max(0, Math.min(MAX, v));
+    render(false);
+  }
+  svg.addEventListener("pointermove", move);
+  function stop() { dragging = -1; }
+  svg.addEventListener("pointerup", stop);
+  svg.addEventListener("pointercancel", stop);
+
+  // Boutons
+  document.getElementById("reset").addEventListener("click", function () {
+    START_BY_SIDE[side].forEach(function (s, i) { labels[i] = s[0]; values[i] = s[1]; });
+    render(false);
+  });
+  document.getElementById("random").addEventListener("click", function () {
+    for (var i = 0; i < N; i++) values[i] = Math.floor(Math.random() * (MAX + 1));
+    render(false);
+  });
+
+  var caption = el("text", { x: CX, y: 548, "text-anchor": "middle", "class": "caption" }, svg);
+  function setSubject(v) {
+    v = v.trim();
+    caption.textContent = v;
+    svg.setAttribute("aria-label", TEXTS[side].aria + " : " + (v || "le sujet"));
+  }
+  var subjectInput = document.getElementById("subject");
+  subjectInput.addEventListener("input", function (e) { setSubject(e.target.value); });
+  setSubject(subjectInput.value);
+
+  // Côté lumineux / côté obscur
+  var swBtn = document.getElementById("sw");
+  var tweenRaf = null;
+  function setSide(next) {
+    var prev = values.slice();
+    side = next;
+    labels = data[side].labels;
+    values = data[side].values;
+    document.documentElement.setAttribute("data-side", side);
+    var dark = side === "dark";
+    document.getElementById("title").textContent = TEXTS[side].title;
+    document.getElementById("subtitle").textContent = TEXTS[side].sub;
+    document.getElementById("sl").className = dark ? "" : "on";
+    document.getElementById("sd").className = dark ? "on" : "";
+    swBtn.setAttribute("aria-checked", dark ? "true" : "false");
+    swBtn.setAttribute("aria-label", TEXTS[side].sw);
+    setSubject(subjectInput.value);
+    if (tweenRaf) { cancelAnimationFrame(tweenRaf); tweenRaf = null; }
+    var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { render(false); return; }
+    var to = values.slice(), t0 = 0;
+    function step(ts) {
+      if (!t0) t0 = ts;
+      var t = Math.min(1, (ts - t0) / 600);
+      var e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      render(false, prev.map(function (f, i) { return f + (to[i] - f) * e; }));
+      if (t < 1) { tweenRaf = requestAnimationFrame(step); } else { tweenRaf = null; render(false); }
+    }
+    tweenRaf = requestAnimationFrame(step);
+  }
+  swBtn.addEventListener("click", function () { setSide(side === "light" ? "dark" : "light"); });
+
+  // Export PNG
+  var statusEl = document.getElementById("status");
+  var previewEl = document.getElementById("preview");
+  var previewImg = document.getElementById("preview-img");
+  var SAFE_FONT = "Helvetica, Arial, sans-serif";
+  var PROPS = ["fill", "stroke", "stroke-width", "stroke-linejoin", "font-size", "font-weight", "text-anchor"];
+
+  function buildSvgString() {
+    var clone = svg.cloneNode(true);
+    var srcAll = svg.querySelectorAll("*");
+    var dstAll = clone.querySelectorAll("*");
+    for (var i = dstAll.length - 1; i >= 0; i--) {
+      var src = srcAll[i], dst = dstAll[i];
+      if (src.getAttribute("class") === "handle-hit") { dst.parentNode.removeChild(dst); continue; }
+      var cs = getComputedStyle(src);
+      PROPS.forEach(function (p) { dst.setAttribute(p, cs.getPropertyValue(p)); });
+      if (dst.tagName.toLowerCase() === "text") dst.setAttribute("font-family", SAFE_FONT);
+      dst.removeAttribute("class");
+      dst.removeAttribute("pointer-events");
+    }
+    var panel = getComputedStyle(document.documentElement).getPropertyValue("--panel").trim() || "#ffffff";
+    var bg = document.createElementNS(NS, "rect");
+    bg.setAttribute("x", 0); bg.setAttribute("y", 0); bg.setAttribute("width", 640); bg.setAttribute("height", 565);
+    bg.setAttribute("fill", panel);
+    clone.insertBefore(bg, clone.firstChild);
+    clone.setAttribute("xmlns", NS);
+    clone.setAttribute("width", 1280); clone.setAttribute("height", 1130);
+    return new XMLSerializer().serializeToString(clone);
+  }
+
+  function makePng() {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement("canvas");
+        c.width = 1280; c.height = 1130;
+        c.getContext("2d").drawImage(img, 0, 0, 1280, 1130);
+        c.toBlob(function (b) { b ? resolve(b) : reject(new Error("png")); }, "image/png");
+      };
+      img.onerror = function () { reject(new Error("img")); };
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(buildSvgString());
+    });
+  }
+
+  function slug(s) {
+    s = (s || "radar").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    return s || "radar";
+  }
+
+  var exportBtn = document.getElementById("export");
+  exportBtn.addEventListener("click", function () {
+    statusEl.textContent = "Création de l'image…";
+    makePng().then(function (blob) {
+      if (previewImg.dataset.url) { try { URL.revokeObjectURL(previewImg.dataset.url); } catch (e) {} }
+      var url = URL.createObjectURL(blob);
+      previewImg.dataset.url = url;
+      previewImg.src = url;
+      previewEl.hidden = false;
+      var name = "radar-" + slug(subjectInput.value) + (side === "dark" ? "-cote-obscur" : "") + ".png";
+      return Promise.resolve(window.claude && window.claude.use ? window.claude.use("downloads") : null).then(function (dl) {
+        if (!dl) {
+          var a = document.createElement("a");
+          a.href = previewImg.dataset.url; a.download = name;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          statusEl.textContent = "Image téléchargée : " + name;
+          return;
+        }
+        return dl.save({ filename: name, data: blob }).then(function () {
+          statusEl.textContent = "Image enregistrée : " + name;
+        }, function (err) {
+          statusEl.textContent = err && err.code === "declined" ? "Enregistrement annulé. L'image reste disponible ci-dessous." : "Enregistrement direct impossible. Utilise l'image ci-dessous.";
+        });
+      });
+    }).catch(function () {
+      statusEl.textContent = "L'image n'a pas pu être créée. Réessaie.";
+    });
+  });
+
+  render(false);
+})();
+</script>
+</body>
+</html>
