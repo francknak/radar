@@ -86,6 +86,7 @@
 
   .stage { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
   svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; }
+  svg#radar { cursor: crosshair; }
   .ring { fill: none; stroke: var(--line); stroke-width: 1; }
   .ring.outer { stroke-width: 1.5; }
   .spoke { stroke: var(--line); stroke-width: 1; }
@@ -335,10 +336,16 @@
     var t = evt.target;
     if (t && t.getAttribute && t.getAttribute("class") === "handle-hit") {
       dragging = +t.getAttribute("data-i");
-      try { svg.setPointerCapture(evt.pointerId); } catch (e) {}
-      evt.preventDefault();
-      move(evt);
+    } else {
+      // Clic dans la toile : on prend l'axe le plus proche et on y place le point
+      var p = toSvg(evt), dx = p.x - CX, dy = p.y - CY;
+      if (Math.sqrt(dx * dx + dy * dy) > R + 16) return;
+      var step = (2 * Math.PI) / N;
+      dragging = ((Math.round((Math.atan2(dy, dx) + Math.PI / 2) / step) % N) + N) % N;
     }
+    try { svg.setPointerCapture(evt.pointerId); } catch (e) {}
+    evt.preventDefault();
+    move(evt);
   });
   function move(evt) {
     if (dragging < 0) return;
