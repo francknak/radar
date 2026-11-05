@@ -69,14 +69,10 @@
   #logo .l-ring.outer { stroke-width: 1.6; }
   #logo .l-shape { fill: var(--accent-fill); stroke: var(--accent); stroke-width: 2.2; stroke-linejoin: round; }
   #logo .l-dot { fill: var(--accent); stroke: var(--panel); stroke-width: 1.2; }
-  #logo .l-halo ellipse { fill: none; }
-  #logo .l-halo .h-knock { stroke: var(--panel); stroke-width: 4.6; }
-  #logo .l-halo .h-ring { stroke: var(--accent); stroke-width: 2; }
   #logo .sk-head { fill: var(--accent); stroke: var(--panel); stroke-width: 1.5; stroke-linejoin: round; paint-order: stroke; }
   #logo .sk-hole { fill: var(--panel); }
   #logo .sk-teeth { fill: none; stroke: var(--panel); stroke-width: 0.9; stroke-linecap: round; }
   #logo .l-skull { opacity: 0; }
-  :root[data-side="dark"] #logo .l-halo { opacity: 0; }
   :root[data-side="dark"] #logo .l-skull { opacity: 1; }
   .name-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   .name-field label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
@@ -153,7 +149,7 @@
     .shape { transition: fill 0.2s; }
     #th { transition: transform 0.25s; }
     #th .ico { transition: opacity 0.25s; }
-    #logo .l-halo, #logo .l-skull { transition: opacity 0.4s; }
+    #logo .l-skull { transition: opacity 0.4s; }
     #sw { transition: background 0.25s, border-color 0.25s; }
     body, .stage, .controls, input[type="text"], button { transition: background-color 0.4s, border-color 0.4s, color 0.4s; }
   }
@@ -164,7 +160,7 @@
 <div class="wrap">
   <header>
     <div>
-      <div class="brand"><svg id="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l-card" x="0.75" y="0.75" width="62.5" height="62.5" rx="12"/><polygon class="l-ring" points="32.00,27.40 35.25,28.75 36.60,32.00 35.25,35.25 32.00,36.60 28.75,35.25 27.40,32.00 28.75,28.75"/><polygon class="l-ring" points="32.00,22.80 38.51,25.49 41.20,32.00 38.51,38.51 32.00,41.20 25.49,38.51 22.80,32.00 25.49,25.49"/><polygon class="l-ring" points="32.00,18.20 41.76,22.24 45.80,32.00 41.76,41.76 32.00,45.80 22.24,41.76 18.20,32.00 22.24,22.24"/><polygon class="l-ring" points="32.00,13.60 45.01,18.99 50.40,32.00 45.01,45.01 32.00,50.40 18.99,45.01 13.60,32.00 18.99,18.99"/><polygon class="l-ring outer" points="32.00,9.00 48.26,15.74 55.00,32.00 48.26,48.26 32.00,55.00 15.74,48.26 9.00,32.00 15.74,15.74"/><line class="l-spoke" x1="32" y1="32" x2="32.00" y2="9.00"/><line class="l-spoke" x1="32" y1="32" x2="48.26" y2="15.74"/><line class="l-spoke" x1="32" y1="32" x2="55.00" y2="32.00"/><line class="l-spoke" x1="32" y1="32" x2="48.26" y2="48.26"/><line class="l-spoke" x1="32" y1="32" x2="32.00" y2="55.00"/><line class="l-spoke" x1="32" y1="32" x2="15.74" y2="48.26"/><line class="l-spoke" x1="32" y1="32" x2="9.00" y2="32.00"/><line class="l-spoke" x1="32" y1="32" x2="15.74" y2="15.74"/><polygon class="l-shape" id="logo-shape"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><g class="l-halo"><ellipse class="h-knock" cx="32" cy="32" rx="7.5" ry="2.4"/><ellipse class="h-ring" cx="32" cy="32" rx="7.5" ry="2.4"/></g><g class="l-skull" transform="translate(23.60,22.97) scale(1.05)"><path class="sk-head" d="M3.3 8a4.7 4.7 0 0 1 9.4 0v2.4l-1.3.9v1.9H4.6v-1.9l-1.3-.9z"/><circle class="sk-hole" cx="6.1" cy="8.3" r="1.25"/><circle class="sk-hole" cx="9.9" cy="8.3" r="1.25"/><path class="sk-teeth" d="M7 13.2v-1.4M9 13.2v-1.4"/></g></svg><h1 id="title">Radar™</h1></div>
+      <div class="brand"><svg id="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l-card" x="0.75" y="0.75" width="62.5" height="62.5" rx="12"/><polygon class="l-ring" points="32.00,27.40 35.25,28.75 36.60,32.00 35.25,35.25 32.00,36.60 28.75,35.25 27.40,32.00 28.75,28.75"/><polygon class="l-ring" points="32.00,22.80 38.51,25.49 41.20,32.00 38.51,38.51 32.00,41.20 25.49,38.51 22.80,32.00 25.49,25.49"/><polygon class="l-ring" points="32.00,18.20 41.76,22.24 45.80,32.00 41.76,41.76 32.00,45.80 22.24,41.76 18.20,32.00 22.24,22.24"/><polygon class="l-ring" points="32.00,13.60 45.01,18.99 50.40,32.00 45.01,45.01 32.00,50.40 18.99,45.01 13.60,32.00 18.99,18.99"/><polygon class="l-ring outer" points="32.00,9.00 48.26,15.74 55.00,32.00 48.26,48.26 32.00,55.00 15.74,48.26 9.00,32.00 15.74,15.74"/><line class="l-spoke" x1="32" y1="32" x2="32.00" y2="9.00"/><line class="l-spoke" x1="32" y1="32" x2="48.26" y2="15.74"/><line class="l-spoke" x1="32" y1="32" x2="55.00" y2="32.00"/><line class="l-spoke" x1="32" y1="32" x2="48.26" y2="48.26"/><line class="l-spoke" x1="32" y1="32" x2="32.00" y2="55.00"/><line class="l-spoke" x1="32" y1="32" x2="15.74" y2="48.26"/><line class="l-spoke" x1="32" y1="32" x2="9.00" y2="32.00"/><line class="l-spoke" x1="32" y1="32" x2="15.74" y2="15.74"/><polygon class="l-shape" id="logo-shape"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><circle class="l-dot" r="2.3"/><g class="l-skull" transform="translate(23.60,22.97) scale(1.05)"><path class="sk-head" d="M3.3 8a4.7 4.7 0 0 1 9.4 0v2.4l-1.3.9v1.9H4.6v-1.9l-1.3-.9z"/><circle class="sk-hole" cx="6.1" cy="8.3" r="1.25"/><circle class="sk-hole" cx="9.9" cy="8.3" r="1.25"/><path class="sk-teeth" d="M7 13.2v-1.4M9 13.2v-1.4"/></g></svg><h1 id="title">Radar™</h1></div>
       <p class="sub" id="subtitle">Radar des qualités</p>
       <div class="side-switch">
         <span id="sl" class="on">Côté lumineux</span>
@@ -230,7 +226,7 @@
   var values = data.light.values;
 
   var svg = document.getElementById("radar");
-  var LOGO_VALS = { light: [8, 6, 7, 5, 7, 5, 8, 6], dark: [9, 6, 8, 5, 9, 6, 8, 5] };
+  var LOGO_VALS = { light: [9, 5, 8, 3, 7, 6, 4, 8], dark: [10, 4, 7, 6, 9, 3, 8, 5] };
   var logoShape = document.getElementById("logo-shape");
   var logoDots = document.querySelectorAll("#logo .l-dot");
   function drawLogo(vs) {
